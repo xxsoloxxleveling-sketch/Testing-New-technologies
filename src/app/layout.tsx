@@ -1,21 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Aryan's Energy | B2B Solar Tech",
-  description: "Powering the Future, Made in Pakistan.",
+  title: "Aryan's Energy | Powering the Future",
+  description: "Tier-1 Pakistani solar manufacturer. Powering the Future, Made in Pakistan.",
 };
 
 export default function RootLayout({
@@ -26,9 +20,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col`}
       >
-        <Navbar />
         {children}
       </body>
     </html>

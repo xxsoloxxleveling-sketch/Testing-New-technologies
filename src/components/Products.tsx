@@ -14,30 +14,27 @@ export default function Products() {
         const slider = sliderRef.current;
         if (!slider) return;
 
-        // Use a matchMedia if we only want this on desktop, but let's assume all screens for now
         let mm = gsap.matchMedia();
 
         mm.add("(min-width: 768px)", () => {
-            // Calculate how far to scroll to show everything
-            const scrollAmount = slider.scrollWidth - window.innerWidth;
+            const getScrollAmount = () => slider.scrollWidth - window.innerWidth;
 
             gsap.to(slider, {
-                x: -scrollAmount,
+                x: () => -getScrollAmount(),
                 ease: "none",
                 scrollTrigger: {
                     trigger: sectionRef.current,
                     start: "top top",
-                    end: `+=${scrollAmount}`,
+                    end: () => `+=${getScrollAmount()}`,
                     pin: true,
                     scrub: 1,
+                    invalidateOnRefresh: true,
                 }
             });
         });
 
-        // Mobile fallback: Just a normal vertical scroll or simple snap
+        // Mobile fallback
         mm.add("(max-width: 767px)", () => {
-            // Disable horizontal scrolltrigger on small screens
-            // It flows naturally vertically in the CSS
         });
 
         return () => mm.revert();

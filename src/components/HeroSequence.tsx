@@ -1,72 +1,148 @@
 "use client";
-import React, { useRef } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
 
-gsap.registerPlugin(ScrollTrigger);
+const FRAME_COUNT = 145; // Based on available frames, adjustable later
+const INITIAL_PRELOAD = 12;
 
 export default function HeroSequence() {
     const containerRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
     const textRef = useRef<HTMLHeadingElement>(null);
-    const videoRef = useRef<HTMLVideoElement>(null);
 
-    useGSAP(() => {
-        const video = videoRef.current;
-        if (!video) return;
+    const imagesRef = useRef<HTMLImageElement[]>([]);
+    const renderState = useRef({ frame: 0 });
 
-        // We need to wait for video metadata to be loaded so we know the duration
-        video.onloadedmetadata = () => {
-            const tl = gsap.timeline({
+    useEffect(() => {
+        gsap.registerPlugin(ScrollTrigger);
+
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext("2d");
+        if (!canvas || !ctx) return;
+
+        // Use current frames which are .jpg from 001 to 145.
+        // Replace with WebP configuration when new extract-frames script is run.
+        const currentFrame = (index: number) =>
+            `/assets/hero-sequence/frame_${(index + 1).toString().padStart(3, "0")}.jpg`;
+
+        const render = () => {
+            const img = imagesRef.current[renderState.current.frame];
+            if (img && img.complete) {
+                const hRatio = canvas.width / img.width;
+                const vRatio = canvas.height / img.height;
+                const ratio = Math.max(hRatio, vRatio);
+                const centerShift_x = (canvas.width - img.width * ratio) / 2;
+                const centerShift_y = (canvas.height - img.height * ratio) / 2;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(
+                    img,
+                    0,
+                    0,
+                    img.width,
+                    img.height,
+                    centerShift_x,
+                    centerShift_y,
+                    img.width * ratio,
+                    img.height * ratio
+                );
+            }
+        };
+
+        const loadImages = async () => {
+            // 1. Load initial set immediately
+            for (let i = 0; i < INITIAL_PRELOAD; i++) {
+                const img = new Image();
+                img.src = currentFrame(i);
+                imagesRef.current.push(img);
+                if (i === 0) {
+                    img.onload = () => {
+                        render();
+                    };
+                }
+            }
+
+            // 2. Background load the rest
+            setTimeout(() => {
+                for (let i = INITIAL_PRELOAD; i < FRAME_COUNT; i++) {
+                    const img = new Image();
+                    img.src = currentFrame(i);
+                    imagesRef.current.push(img);
+                }
+            }, 500);
+        };
+
+        loadImages();
+
+        const mm = gsap.matchMedia();
+
+        mm.add("(min-width: 1px)", () => {
+            const st = ScrollTrigger.create({
+                trigger: containerRef.current,
+                start: "top top",
+                end: "+=2000",
+                pin: true,
+                scrub: 0.5,
+            });
+
+            gsap.to(renderState.current, {
+                frame: FRAME_COUNT - 1,
+                snap: "frame",
+                ease: "none",
                 scrollTrigger: {
                     trigger: containerRef.current,
                     start: "top top",
                     end: "+=2000",
-                    scrub: 1, // Soft scrub
-                    pin: true,
+                    scrub: 0.5,
                 },
+                onUpdate: render,
             });
 
-            // Scrub the video by updating currentTime
-            tl.to(video, {
-                currentTime: video.duration || 1, // Fallback to 1s if duration is NaN initially
-                ease: "none",
-            });
-
-            // Also fade out the text overlay
             gsap.to(textRef.current, {
                 opacity: 0,
-                y: -100,
-                scale: 0.9,
-                ease: "power1.inOut",
+                y: -50,
+                ease: "power2.inOut",
                 scrollTrigger: {
                     trigger: containerRef.current,
                     start: "top top",
                     end: "+=800",
-                    scrub: true,
-                }
+                    scrub: 0.5,
+                },
             });
-        };
 
-        // Fallback if metadata is already loaded (e.g. cached)
-        if (video.readyState >= 1 && video.duration) {
-            video.onloadedmetadata(new Event("loadedmetadata"));
-        }
-    }, { scope: containerRef });
+            const handleResize = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                render();
+            };
+
+            handleResize();
+            window.addEventListener("resize", handleResize);
+
+            return () => {
+                window.removeEventListener("resize", handleResize);
+                st.kill();
+            };
+        });
+
+        return () => {
+            mm.revert();
+        };
+    }, []);
 
     return (
-        <section ref={containerRef} className="relative w-full h-screen bg-slate-900 border-b border-slate-800 overflow-hidden">
-            <video
-                ref={videoRef}
-                src="/assets/videos/hero.mp4"
-                className="absolute top-0 left-0 w-full h-full object-cover z-0"
-                muted
-                playsInline
-                preload="auto"
+        <section ref={containerRef} className="relative w-full h-screen bg-black overflow-hidden relative">
+            <canvas
+                ref={canvasRef}
+                className="absolute top-0 left-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none bg-slate-900/40">
-                <h1 ref={textRef} className="text-5xl md:text-8xl font-bold text-center text-white drop-shadow-2xl max-w-5xl px-4 leading-tight">
-                    Powering the Future,<br /> Made in <span className="text-sun-yellow">Pakistan.</span>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 px-4">
+                <h1
+                    ref={textRef}
+                    className="text-white text-5xl md:text-7xl lg:text-[5rem] font-bold text-center leading-tight tracking-tight drop-shadow-xl"
+                >
+                    Powering the Future,<br />Made in Pakistan.
                 </h1>
             </div>
         </section>

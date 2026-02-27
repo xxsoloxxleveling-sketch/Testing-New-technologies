@@ -1,53 +1,74 @@
 "use client";
-import React, { useRef } from "react";
+
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
-
-gsap.registerPlugin(ScrollTrigger);
 
 export default function Mission() {
-    const containerRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLElement>(null);
     const text1Ref = useRef<HTMLHeadingElement>(null);
     const text2Ref = useRef<HTMLHeadingElement>(null);
     const text3Ref = useRef<HTMLHeadingElement>(null);
 
-    useGSAP(() => {
-        const tl = gsap.timeline({
-            scrollTrigger: {
-                trigger: containerRef.current,
-                start: "top top",
-                end: "+=3000", // 3000px of scroll space for the pinning
-                scrub: true,
-                pin: true,
-            }
+    useEffect(() => {
+        gsap.registerPlugin(ScrollTrigger);
+
+        const mm = gsap.matchMedia();
+
+        // Only apply animations on devices where scroll triggering makes sense
+        mm.add("(min-width: 1px)", () => {
+            const tl = gsap.timeline({
+                scrollTrigger: {
+                    trigger: containerRef.current,
+                    start: "top top",
+                    end: "+=300%",
+                    pin: true,
+                    scrub: 1,
+                }
+            });
+
+            // Statement 1
+            tl.fromTo(text1Ref.current,
+                { autoAlpha: 0, y: 50 },
+                { autoAlpha: 1, y: 0, duration: 1 }
+            )
+                .to(text1Ref.current, { autoAlpha: 0, y: -50, duration: 1 }, "+=0.5")
+
+                // Statement 2
+                .fromTo(text2Ref.current,
+                    { autoAlpha: 0, y: 50 },
+                    { autoAlpha: 1, y: 0, duration: 1 }
+                )
+                .to(text2Ref.current, { autoAlpha: 0, y: -50, duration: 1 }, "+=0.5")
+
+                // Statement 3
+                .fromTo(text3Ref.current,
+                    { autoAlpha: 0, y: 50 },
+                    { autoAlpha: 1, y: 0, duration: 1 }
+                )
+                .to(text3Ref.current, { autoAlpha: 0, y: -50, duration: 1 }, "+=0.5");
+
+            return () => {
+                tl.kill();
+            };
         });
 
-        // Animate texts to visible and then invisible sequentially
-        tl.to(text1Ref.current, { opacity: 1, y: 0, duration: 1 })
-            .to(text1Ref.current, { opacity: 0, y: -50, duration: 1 }, "+=0.5")
-
-            .to(text2Ref.current, { opacity: 1, y: 0, duration: 1 })
-            .to(text2Ref.current, { opacity: 0, y: -50, duration: 1 }, "+=0.5")
-
-            .to(text3Ref.current, { opacity: 1, y: 0, duration: 1 })
-            .to(text3Ref.current, { opacity: 0, y: -50, duration: 1 }, "+=0.5");
-
-    }, { scope: containerRef });
+        return () => {
+            mm.revert();
+        };
+    }, []);
 
     return (
-        <section ref={containerRef} className="relative w-full h-screen bg-off-white text-foreground flex items-center justify-center overflow-hidden">
-            <div className="relative w-full max-w-5xl px-6 h-full flex items-center justify-center">
-                <h2 ref={text1Ref} className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-800 absolute w-full px-4 text-center opacity-0 translate-y-12">
-                    We believe in <span className="text-sun-yellow">Energy Sovereignty.</span>
+        <section ref={containerRef} className="relative w-full h-screen bg-slate-50 text-slate-800 flex flex-col items-center justify-center overflow-hidden">
+            <div className="relative w-full max-w-5xl px-6 mx-auto text-center h-full flex items-center justify-center">
+                <h2 ref={text1Ref} className="absolute text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight opacity-0 text-slate-900">
+                    We believe in Energy Sovereignty.
                 </h2>
-                <h2 ref={text2Ref} className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-800 absolute w-full px-4 text-center opacity-0 translate-y-12">
-                    Bridging the gap between <br />
-                    global <span className="text-slate-500">innovation</span> and local <span className="text-slate-500">accessibility</span>.
+                <h2 ref={text2Ref} className="absolute text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight opacity-0 text-slate-900">
+                    Bridging global innovation with local manufacturing.
                 </h2>
-                <h2 ref={text3Ref} className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-800 absolute w-full px-4 text-center opacity-0 translate-y-12">
-                    Reducing soft costs.<br />
-                    <span className="text-sun-yellow">Eliminating shipping delays.</span>
+                <h2 ref={text3Ref} className="absolute text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight opacity-0 text-slate-900">
+                    Reducing soft costs. Eliminating delays.
                 </h2>
             </div>
         </section>

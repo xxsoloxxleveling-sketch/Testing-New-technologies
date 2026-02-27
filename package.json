@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "extract-frames": "ffmpeg -i hero.mp4 -vf fps=30 public/assets/hero-sequence/frame_%04d.webp"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
